@@ -1,0 +1,89 @@
+{% extends "utils.html" %}
+{% block body %}
+<main>
+    <div class="container-fluid">
+        <br>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item active">Crypto Trade Charts</li>
+        </ol>
+        <div id='chart'></div>
+        <div class="table-responsive">
+            <table class='table table-striped table-bordered' id="trade_list">
+                <thead>
+                    <tr>
+                        <th>Target</th>
+                        <th>Total Cost</th>
+                    </tr>
+                </thead>
+                <tbody id='table_body'>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script>
+
+    function fetch_trade_record(){
+        fetch(`/crypto/costs`,
+        {
+            method: 'GET',
+            headers: {
+                'content-type': 'application/json'
+            },
+
+        }).then(function (response){
+            return response.json()
+        }).then(function (response){
+            construct_chart_and_table(response)
+        })
+    };
+    
+    function construct_chart_and_table(data_dict){
+        construct_chart(data_dict);
+        construct_table(data_dict);
+
+    };
+    function construct_chart(data_dict){
+        chart_labels = Object.keys(data_dict)
+        chart_series = Object.values(data_dict)
+        var options = {
+            series: chart_series,
+            chart: {
+            width: 380,
+            type: 'pie',
+            },
+            labels: chart_labels,
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    chart: {
+                        width: 500
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }]
+        }; 
+    var chart = new ApexCharts(document.querySelector("#chart"), options); chart.render();
+    };
+    
+    function construct_table(data_dict){
+        var tbdy = document.getElementById('table_body');
+        for (let target in data_dict){
+            var tr = document.createElement('tr');
+            target_td = create_td(target)
+            cost_td = create_td(data_dict[target])
+            tr.appendChild(target_td);
+            tr.appendChild(cost_td);
+            tbdy.appendChild(tr);
+        }
+    };
+    function create_td(val){
+        var td = document.createElement('td')
+        td.innerHTML = val
+        return td
+    };
+    fetch_trade_record()
+</script>
+{% endblock %}

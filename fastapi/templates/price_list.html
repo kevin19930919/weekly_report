@@ -1,0 +1,59 @@
+{% extends "utils.html" %}
+{% block body %}
+<main>
+    <div class="container-fluid">
+        <br>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item active">Price</li>
+        </ol>
+        <div class="table-responsive">
+            <table class='table table-striped table-bordered' id="trade_list">
+                <thead>
+                    <tr>
+                        <th>Target</th>
+                        <th>Current Price(USD)</th>
+                    </tr>
+                </thead>
+                <tbody id='table_body'>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script>
+    function fetch_price_list(){
+        fetch(`/crypto/current-price`,
+        {
+            method: 'GET',
+            headers: {
+                'content-type': 'application/json'
+            },
+
+        }).then(function (response){
+            return response.json()
+        }).then(function (response){
+            construct_price_table(response)
+        })
+    };
+
+    function construct_price_table(price_dict){
+        var tbdy = document.getElementById('table_body');
+        for (let target in price_dict){
+            var tr = document.createElement('tr');
+            target_td = create_td(target)
+            price_td = create_td(price_dict[target])
+            tr.appendChild(target_td);
+            tr.appendChild(price_td);
+            tbdy.appendChild(tr);
+        }
+    };
+
+    function create_td(val){
+        var td = document.createElement('td')
+        td.innerHTML = val
+        return td
+    };
+
+    fetch_price_list();
+</script>
+{% endblock %}

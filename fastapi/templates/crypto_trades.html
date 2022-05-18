@@ -1,0 +1,215 @@
+{% extends "utils.html" %}
+{% block body %}
+<main>
+    <div class="container-fluid" style='margin:1%;'>
+        <br>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item active">Trade List</li>
+        </ol>
+        <div class="row mb-3">
+            <div class="col text-left">
+                <button type="button" class="btn btn-outline-primary" onclick='open_create_modal()'  title="Create"><i class="fas fa-plus"></i></button>
+                <button type="button" class="btn btn-outline-primary" onclick='delete_trade()'  title="Delete"><i class="fas fa-trash-alt"></i></button>
+            </div>         
+        </div>
+        <div class="modal fade" id='create_trade_modal' role="dialog">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Create Trade</h4>
+                    </div>
+                    <div class="modal-body" style="margin: 3.5%;">
+                        <div class="form-group">
+                            <label class="col-form-label"><h5>Target:</h5></label>
+                            <input type="text" class="form-control" id="target">
+                        </div>
+                        <div class="form-group">
+                            <label class="col-form-label"><h5>Cost:</h5></label>
+                            <input type=number step=any class="form-control" id="cost">
+                        </div>
+                        <div class="form-group">
+                            <label class="col-form-label"><h5>Unit:</h5></label>
+                            <input type=number step=any class="form-control" id="unit">
+                        </div>
+                        <div class="form-group">
+                            <label  class="col-form-label"><h5>Date:</h5></label>
+                            <input type="date" class='form-control' id="date">
+                        </div>
+                        <div class="form-group">
+                            <label  class="col-form-label"><h5>Exchange:</h5></label>
+                            <input type="text" class='form-control' id="exchange">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary"  id="create_trade" onclick='create_trade()'>Upload</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class='table table-striped table-bordered' id="trade_list">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox"></th>
+                        <th style="display:none;">hash</th>
+                        <th>Target</th>
+                        <th>Echange</th>
+                        <th>Purchase Time</th>
+                        <th>Cost</th>
+                        <th>Unit</th>
+                        <th>Total Cost</th>
+                    </tr>
+                </thead>
+                <tbody id='table_body'>
+                    <tr>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script>
+    function check_info_complete (){
+        let target = document.getElementById('target').value;
+        let cost = parseFloat(document.getElementById('cost').value);
+        let unit = parseFloat(document.getElementById('unit').value);
+        let date = document.getElementById('date').value;
+        let exchange = document.getElementById('exchange').value;
+        if (!target || !cost || !unit || !date ||!exchange) { return false }
+        else {
+            return { 
+                'target': target, 
+                'price': cost, 
+                'quantity': unit, 
+                "date": date,
+                "exchange": exchange
+            }
+        }
+    }
+    function create_trade (){
+        let submit_info = check_info_complete();
+        if (!submit_info) { 
+            alert('information not complete!');
+            return };         
+        fetch_create_trade_api(submit_info);
+    };
+    function delete_trade() {
+        var checkBoxes = document.querySelectorAll("input[id^='checkbox']:checked");
+        for (var i = 0; i < checkBoxes.length; i++) {
+            let row = checkBoxes[i].parentNode.parentNode;
+            let trade_hash = row.cells[1].innerHTML;
+            fetch(`/crypto/trade?trade_hash=${trade_hash}`,{ method: 'DELETE', headers: {'content-type': 'application/json'} 
+            }).then(function (response){
+                return response.json();
+            }).then(function(_json) {
+                fetch_trade_record()
+            })
+        }
+    };
+    function fetch_create_trade_api (info){
+        console.log(JSON.stringify(info))    
+        fetch('/crypto/trade', 
+        { 
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify(info)
+        }).then(function (response){
+            $('#create_trade_modal').modal('hide');
+            fetch_trade_record()
+        })
+    }
+    
+    function open_create_modal() {
+        $('#create_trade_modal').modal('show');
+    };
+    function create_td_with_content(content){
+        var td = document.createElement('td');
+        td.innerHTML = content
+        return td
+    };
+    function parse_total_cost(price, quantity){
+        total_cost = price*quantity;
+        return create_td_with_content(total_cost)
+    }
+    function parse_check_box(content){
+        var td = document.createElement('td');
+        var check_box = document.createElement('input');
+        check_box.id = 'checkbox'+ content;
+        check_box.type = 'checkbox';
+        td.append(check_box);
+        return td
+    }
+    function construct_table(fetch_result){
+        var list_node = document.getElementById('trade_list');
+        var tbdy = document.getElementById('table_body');
+        while (tbdy.firstChild) { tbdy.removeChild(tbdy.firstChild); };
+        for (trade of fetch_result) {
+            var tr = document.createElement('tr');
+            td = parse_check_box(trade['trade_hash'])
+            tr.appendChild(td)
+            for (info_key of ['trade_hash', 'target', 'exchange', 'trade']) {
+                if (info_key == 'trade_hash') {
+                    td = create_td_with_content(trade[info_key]);
+                    td.style.display = "none";
+                    tr.appendChild(td)
+                }
+                else if(info_key != 'trade'){
+                    td = create_td_with_content(trade[info_key])
+                    tr.appendChild(td)
+                }
+                else{
+                    for (key of ['date', 'price', 'quantity']){
+                        td = create_td_with_content(trade['trade'][key]);
+                        tr.appendChild(td);
+                    };
+                    td = parse_total_cost(trade['trade']['price'], trade['trade']['quantity']);
+                    tr.appendChild(td);
+                }
+            }
+
+            tbdy.appendChild(tr);
+
+        }
+
+    }
+    function fetch_trade_record(){
+        fetch('/crypto/trades',
+        {
+            method: 'GET',
+            headers: {
+                'content-type': 'application/json'
+            },
+
+        }).then(function (response){
+            return response.json()
+        }).then(function (_json){
+            construct_table(_json)
+        }).then(function(){
+            $('#trade_list').DataTable({
+                retrieve: true,
+                "lengthMenu": [[10, 20, 30, -1], [10, 20, 30, "All"]],
+                "order": [[ 1, "asc" ], [ 6, "desc" ]],
+                "autoWidth": false,
+                "columnDefs": [ {
+                    "targets": 0,
+                    "searchable": false,
+                    "orderable": false,
+                    "className": "text-center",
+                    "width": "3%"
+                } ],
+            })
+
+        })
+    };
+
+
+    fetch_trade_record()
+
+
+
+
+    
+</script>
+{% endblock %}

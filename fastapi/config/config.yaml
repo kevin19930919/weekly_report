@@ -1,0 +1,3 @@
+template_folder: /workspace/aidms/templates
+static_folder: /workspace/aidms/static
+db_path: ./fastapi/database/sqlite.db
