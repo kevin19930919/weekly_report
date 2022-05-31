@@ -6,50 +6,61 @@ import sys
 sys.path.append('./fatapi/model')
 from database import hash_func
 
+#===== account =======
+class AccountBase(BaseModel):
+    email: str
+    password: str
 
-class Trade(BaseModel):
+class AccountCreate(AccountBase):
+    pass
+    
+class Account(AccountBase):
+    projects: List[Project] = []
+    class Config:
+        orm_mode = True
+
+#===== project ======
+class ProjectBase(BaseModel):
+    name: str
+
+class ProjectCreate(ProjectBase):
+    pass
+
+class Project(ProjectBase):
+    account_id: int
+    
+    class Config:
+        orm_mode = True
+
+class Project_Report(ProjectBase):
+    reports: List[Report]
+
+# ===== report =====
+class ReportBase(BaseModel):
+    name: str
     date: date
-    price: float
-    quantity: float
-    
-    class Config:
-        orm_mode = True
-
-
-class Crypto(BaseModel):
-    target: str
-    exchange: str
-    
-    class Config:
-        orm_mode = True
-
-class GetCryptoTrade(Crypto):
-    trade_hash: str
-    trade: Trade
+class ReportCreate(ReportBase):
     pass
 
-class CreateCryptoTrade(Crypto, Trade):
-    pass
-
-class UpdateCryptoTrade(Crypto, Trade):
-    pass
-
-class USStock(BaseModel):
-    target: str
-
+class Report(ReportBase):
+    statements:List[Statement] = []
     class Config:
         orm_mode = True        
 
-class CreateUSStockTrade(USStock, Trade):
+class Report_Project(Project):
+    projects: List[Project]
+
+#===== statement =====
+class StatementBase(BaseModel):
+    text :str
+    progress :int
+    predict_finish_date :date
+
+class StatementCreate(StatementBase):    
     pass
 
-class UpdateUSStockTrade(USStock, Trade):
-    pass
+class Statement(StatementBase):    
+    report_id: int
 
-class Alert(BaseModel):
-    crypto:str
-	direction:bool
-	price:float
-    
     class Config:
         orm_mode = True

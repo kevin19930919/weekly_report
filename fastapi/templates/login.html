@@ -1,0 +1,58 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link href="{{url_for('static',filename='css/styles.css')}}" rel="stylesheet" />
+
+
+    <!-- Custom styles for this template -->
+    <link href="{{url_for('static',filename='css/signin.css')}}" rel="stylesheet">
+</head>
+
+<body class="text-center">
+    <form class="form-signin" onsubmit="return false;">
+        <img class="mb-4" src="{{url_for('static',filename='img/logo.png')}}" alt="" width="350" height="65"
+            style="margin-left: -20%;margin-bottom: 20px;">
+        <label for="inputEmail" class="sr-only">Email address</label>
+        <input id="inputUserEmail" name="inputUserEmail" class="form-control" style="font-weight: 500;"
+            placeholder="Email address" required="" autofocus="">
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" id="inputPassword" name="inputPassword" class="form-control" style="font-weight: 500;"
+            placeholder="Password" required="">
+        <div class="checkbox mb-3">
+            <label>
+                <input type="checkbox" value="remember-me"> Remember me
+            </label>
+        </div>
+        <button class="btn btn-lg btn-primary btn-block" onclick=fetch_login()> Login</button>
+        <p class="mt-5 mb-3 text-muted" style="font-weight: 500;">Copy right © Leadtek Website 2021</p>
+    </form>
+</body>
+
+<script>
+    function fetch_login() {
+        var email = document.getElementById("inputUserEmail").value
+        var password = document.getElementById("inputPassword").value
+        var main_url = `/login`;
+        var formdata = new FormData()
+        formdata.append('user_email', email)
+        formdata.append('password', password)
+
+        fetch(main_url, {
+            method: 'POST', body: formdata, header: "multipart/form-data"
+        }).then(function (response) {
+            switch (response.status) {
+                case 201:
+                    window.location = '/index'
+                default:
+                    response.json().then(function (res_json) {
+                        alert(res_json['message'])
+                    })
+            }
+        })
+    }
+
+</script>

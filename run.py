@@ -19,7 +19,7 @@ from api import cryptoAPI
 from view import cryptoView
 app.include_router(cryptoAPI.cryptoAPIRouter)
 app.include_router(cryptoView.CryptoTradeListRouter)
-
+app.include_router(login.LoginViewer)
 
 
 if __name__ == "__main__":
